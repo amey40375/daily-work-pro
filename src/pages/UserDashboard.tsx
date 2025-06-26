@@ -14,7 +14,7 @@ import OrderHistory from '../components/OrderHistory';
 
 const UserDashboard = () => {
   const { user, logout } = useAuth();
-  const { services, getUserOrders } = useData();
+  const { services, getUserOrders, refreshData } = useData();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('home');
   const [selectedService, setSelectedService] = useState<any>(null);
@@ -31,8 +31,14 @@ const UserDashboard = () => {
     }
   }, [user, navigate]);
 
-  const handleLogout = () => {
-    logout();
+  useEffect(() => {
+    if (user) {
+      refreshData();
+    }
+  }, [user]);
+
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
     toast({
       title: "Logout Berhasil",
@@ -134,7 +140,7 @@ const UserDashboard = () => {
                             <h4 className="font-medium">{order.serviceName}</h4>
                             <p className="text-sm text-gray-600">{order.address}</p>
                             <p className="text-xs text-gray-500">
-                              {new Date(order.scheduledDate).toLocaleDateString('id-ID')} - {order.scheduledTime}
+                              {new Date(order.scheduled_date).toLocaleDateString('id-ID')} - {order.scheduledTime}
                             </p>
                           </div>
                           <Badge className={`${getStatusColor(order.status)} text-white`}>
@@ -153,7 +159,7 @@ const UserDashboard = () => {
               <h3 className="text-lg font-semibold mb-3">Layanan Tersedia</h3>
               <div className="grid grid-cols-2 gap-4">
                 {services
-                  .filter(service => service.isActive)
+                  .filter(service => service.is_active)
                   .map(service => (
                     <ServiceCard
                       key={service.id}
@@ -198,26 +204,26 @@ const UserDashboard = () => {
                         </div>
                         
                         <div className="text-sm">
-                          <p><strong>Jadwal:</strong> {new Date(order.scheduledDate).toLocaleDateString('id-ID')} - {order.scheduledTime}</p>
+                          <p><strong>Jadwal:</strong> {new Date(order.scheduled_date).toLocaleDateString('id-ID')} - {order.scheduledTime}</p>
                           {order.notes && <p><strong>Catatan:</strong> {order.notes}</p>}
                         </div>
 
-                        {order.status === 'working' && order.startTime && (
+                        {order.status === 'working' && order.start_time && (
                           <div className="bg-green-50 p-3 rounded-lg">
                             <p className="text-sm text-green-800">
                               <strong>Sedang Dikerjakan</strong>
                             </p>
                             <p className="text-xs text-green-600">
-                              Mulai: {new Date(order.startTime).toLocaleTimeString('id-ID')}
+                              Mulai: {new Date(order.start_time).toLocaleTimeString('id-ID')}
                             </p>
                           </div>
                         )}
 
-                        {order.status === 'completed' && order.totalAmount && (
+                        {order.status === 'completed' && order.total_amount && (
                           <div className="bg-gray-50 p-3 rounded-lg">
-                            <p className="text-sm"><strong>Total Biaya:</strong> Rp {order.totalAmount.toLocaleString('id-ID')}</p>
+                            <p className="text-sm"><strong>Total Biaya:</strong> Rp {order.total_amount.toLocaleString('id-ID')}</p>
                             <p className="text-xs text-gray-600">
-                              Durasi: {Math.round((order.workDuration || 0) / 60)} menit
+                              Durasi: {Math.round((order.duration_minutes || 0))} menit
                             </p>
                           </div>
                         )}
@@ -275,6 +281,7 @@ const UserDashboard = () => {
             setShowOrderForm(false);
             setSelectedService(null);
             setActiveTab('orders');
+            refreshData();
           }}
         />
       )}

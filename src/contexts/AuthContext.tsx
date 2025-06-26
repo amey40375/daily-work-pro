@@ -1,7 +1,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
 
-interface User {
+interface AuthUser {
   id: string;
   email: string;
   name: string;
@@ -13,9 +15,10 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
+  session: Session | null;
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   register: (userData: any, role: 'mitra' | 'user') => Promise<boolean>;
   isLoading: boolean;
 }
@@ -31,8 +34,9 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [lastActivity, setLastActivity] = useState(Date.now());
 
   // Auto logout after 15 minutes of inactivity
@@ -43,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    const interval = setInterval(checkActivity, 60000); // Check every minute
+    const interval = setInterval(checkActivity, 60000);
     return () => clearInterval(interval);
   }, [user, lastActivity]);
 
@@ -64,46 +68,92 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
+  // Initialize auth state
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session);
+        setSession(session);
+        
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profile) {
+            setUser({
+              id: profile.id,
+              email: profile.email,
+              name: profile.full_name,
+              role: profile.role,
+              phone: profile.phone,
+              isVerified: profile.role === 'user' || profile.role === 'admin'
+            });
+          }
+        } else {
+          setUser(null);
+        }
+        setIsLoading(false);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setSession(session);
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     
     try {
-      // Admin login
-      if (email === 'id.arvinstudio@gmail.com' && password === 'Bandung123') {
-        setUser({
-          id: 'admin-1',
-          email,
-          name: 'Administrator',
-          role: 'admin'
-        });
-        setLastActivity(Date.now());
-        return true;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        console.error('Login error:', error);
+        return false;
       }
 
-      // Get existing users from localStorage
-      const users = JSON.parse(localStorage.getItem('dailywork_users') || '[]');
-      const foundUser = users.find((u: any) => u.email === email && u.password === password);
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
 
-      if (foundUser) {
         // Check if mitra is verified
-        if (foundUser.role === 'mitra' && !foundUser.isVerified) {
-          return false; // Will show verification pending message
+        if (profile?.role === 'mitra') {
+          const { data: mitraApp } = await supabase
+            .from('mitra_applications')
+            .select('status')
+            .eq('user_id', data.user.id)
+            .eq('status', 'approved')
+            .single();
+
+          if (!mitraApp) {
+            await supabase.auth.signOut();
+            return false; // Will show verification pending message
+          }
         }
 
-        setUser({
-          id: foundUser.id,
-          email: foundUser.email,
-          name: foundUser.name,
-          role: foundUser.role,
-          isVerified: foundUser.isVerified,
-          phone: foundUser.phone,
-          address: foundUser.address,
-          profileImage: foundUser.profileImage
-        });
         setLastActivity(Date.now());
         return true;
       }
 
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
       return false;
     } finally {
       setIsLoading(false);
@@ -114,47 +164,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      const users = JSON.parse(localStorage.getItem('dailywork_users') || '[]');
-      
-      // Check if email already exists
-      if (users.find((u: any) => u.email === userData.email)) {
+      const { data, error } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: userData.name,
+            phone: userData.phone,
+            role: role
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Registration error:', error);
         return false;
       }
 
-      const newUser = {
-        id: Date.now().toString(),
-        ...userData,
-        role,
-        isVerified: role === 'user', // Users are auto-verified, mitras need admin approval
-        createdAt: new Date().toISOString()
-      };
+      if (data.user) {
+        // If registering as mitra, add to mitra_applications
+        if (role === 'mitra') {
+          const { error: mitraError } = await supabase
+            .from('mitra_applications')
+            .insert({
+              user_id: data.user.id,
+              full_name: userData.name,
+              phone: userData.phone,
+              address: userData.address,
+              experience: userData.experience,
+              skills: userData.skills ? userData.skills.split(',').map((s: string) => s.trim()) : null,
+              status: 'pending'
+            });
 
-      users.push(newUser);
-      localStorage.setItem('dailywork_users', JSON.stringify(users));
+          if (mitraError) {
+            console.error('Mitra application error:', mitraError);
+          }
+        }
 
-      // If registering as mitra, add to pending approvals
-      if (role === 'mitra') {
-        const pendingApprovals = JSON.parse(localStorage.getItem('pending_mitra_approvals') || '[]');
-        pendingApprovals.push({
-          ...newUser,
-          status: 'pending'
-        });
-        localStorage.setItem('pending_mitra_approvals', JSON.stringify(pendingApprovals));
+        return true;
       }
 
-      return true;
+      return false;
+    } catch (error) {
+      console.error('Registration error:', error);
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
+    setSession(null);
     setLastActivity(Date.now());
   };
 
   const value = {
     user,
+    session,
     login,
     logout,
     register,

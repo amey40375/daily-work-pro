@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import RegistrationForm from '../components/RegistrationForm';
+import { supabase } from '@/integrations/supabase/client';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -35,18 +36,24 @@ const Login = () => {
     const success = await login(email, password);
     
     if (success) {
-      // Determine redirect based on email
+      // Determine redirect based on email and role
       if (email === 'id.arvinstudio@gmail.com') {
         navigate('/admin');
       } else {
-        // Check user role from localStorage
-        const users = JSON.parse(localStorage.getItem('dailywork_users') || '[]');
-        const user = users.find((u: any) => u.email === email);
-        
-        if (user?.role === 'mitra') {
-          navigate('/mitra');
-        } else {
-          navigate('/user');
+        // Get user profile from Supabase
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          
+          if (profile?.role === 'mitra') {
+            navigate('/mitra');
+          } else {
+            navigate('/user');
+          }
         }
       }
       
@@ -56,12 +63,22 @@ const Login = () => {
       });
     } else {
       // Check if it's a pending mitra
-      const users = JSON.parse(localStorage.getItem('dailywork_users') || '[]');
-      const user = users.find((u: any) => u.email === email && u.password === password);
-      
-      if (user && user.role === 'mitra' && !user.isVerified) {
-        setShowMitraPending(true);
-        return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          
+          if (profile?.role === 'mitra') {
+            setShowMitraPending(true);
+            return;
+          }
+        }
+      } catch (error) {
+        console.log('Error checking user status');
       }
       
       toast({

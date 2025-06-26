@@ -14,7 +14,7 @@ interface OrderFormProps {
   service: {
     id: string;
     name: string;
-    basePrice: number;
+    base_price: number;
   };
   onClose: () => void;
   onSuccess: () => void;
@@ -29,8 +29,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ service, onClose, onSuccess }) =>
     scheduledTime: '',
     notes: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.address || !formData.scheduledDate || !formData.scheduledTime) {
@@ -55,23 +56,35 @@ const OrderForm: React.FC<OrderFormProps> = ({ service, onClose, onSuccess }) =>
       return;
     }
 
-    addOrder({
-      userId: user!.id,
-      serviceId: service.id,
-      serviceName: service.name,
-      address: formData.address,
-      scheduledDate: formData.scheduledDate,
-      scheduledTime: formData.scheduledTime,
-      status: 'pending',
-      notes: formData.notes
-    });
+    setIsSubmitting(true);
 
-    toast({
-      title: "Pesanan Berhasil",
-      description: "Pesanan Anda telah dibuat dan menunggu mitra"
-    });
+    try {
+      await addOrder({
+        user_id: user!.id,
+        service_id: service.id,
+        serviceName: service.name,
+        address: formData.address,
+        scheduled_date: formData.scheduledDate,
+        scheduledTime: formData.scheduledTime,
+        status: 'pending',
+        notes: formData.notes
+      });
 
-    onSuccess();
+      toast({
+        title: "Pesanan Berhasil",
+        description: "Pesanan Anda telah dibuat dan menunggu mitra"
+      });
+
+      onSuccess();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Gagal membuat pesanan. Silakan coba lagi.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -87,7 +100,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ service, onClose, onSuccess }) =>
               Pesan {service.name}
             </CardTitle>
             <p className="text-sm text-gray-600">
-              Mulai dari Rp {service.basePrice.toLocaleString('id-ID')}
+              Mulai dari Rp {service.base_price.toLocaleString('id-ID')}
             </p>
           </CardHeader>
           
@@ -145,14 +158,16 @@ const OrderForm: React.FC<OrderFormProps> = ({ service, onClose, onSuccess }) =>
                   variant="outline"
                   onClick={onClose}
                   className="flex-1"
+                  disabled={isSubmitting}
                 >
                   Batal
                 </Button>
                 <Button
                   type="submit"
                   className="flex-1 bg-blue-500 hover:bg-blue-600"
+                  disabled={isSubmitting}
                 >
-                  Pesan Sekarang
+                  {isSubmitting ? 'Memproses...' : 'Pesan Sekarang'}
                 </Button>
               </div>
             </form>
