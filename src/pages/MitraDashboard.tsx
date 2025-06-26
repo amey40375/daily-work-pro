@@ -33,8 +33,8 @@ const MitraDashboard = () => {
     
     const interval = setInterval(() => {
       workingOrdersList.forEach(order => {
-        if (order.startTime) {
-          const startTime = new Date(order.startTime).getTime();
+        if (order.start_time) {
+          const startTime = new Date(order.start_time).getTime();
           const currentTime = Date.now();
           const duration = currentTime - startTime;
           
@@ -61,7 +61,7 @@ const MitraDashboard = () => {
   const handleAcceptOrder = (orderId: string) => {
     updateOrder(orderId, { 
       status: 'accepted', 
-      mitraId: user?.id 
+      mitra_id: user?.id 
     });
     toast({
       title: "Pesanan Diterima",
@@ -89,7 +89,7 @@ const MitraDashboard = () => {
     const startTime = new Date().toISOString();
     updateOrder(orderId, { 
       status: 'working',
-      startTime: startTime
+      start_time: startTime
     });
     toast({
       title: "Mulai Bekerja",
@@ -99,10 +99,10 @@ const MitraDashboard = () => {
 
   const handleFinishWork = (orderId: string) => {
     const order = myOrders.find(o => o.id === orderId);
-    if (!order || !order.startTime) return;
+    if (!order || !order.start_time) return;
 
     const endTime = new Date().toISOString();
-    const startTime = new Date(order.startTime).getTime();
+    const startTime = new Date(order.start_time).getTime();
     const finishTime = new Date(endTime).getTime();
     const workDuration = finishTime - startTime; // in milliseconds
     const workHours = workDuration / (1000 * 60 * 60); // convert to hours
@@ -110,9 +110,9 @@ const MitraDashboard = () => {
 
     updateOrder(orderId, {
       status: 'completed',
-      endTime: endTime,
-      workDuration: workDuration,
-      totalAmount: totalAmount
+      end_time: endTime,
+      duration_minutes: Math.round(workDuration / 60000),
+      total_amount: totalAmount
     });
 
     // Clear timer
@@ -243,7 +243,7 @@ const MitraDashboard = () => {
                         </div>
                         
                         <div className="text-sm">
-                          <p><strong>Jadwal:</strong> {new Date(order.scheduledDate).toLocaleDateString('id-ID')} - {order.scheduledTime}</p>
+                          <p><strong>Jadwal:</strong> {new Date(order.scheduled_date).toLocaleDateString('id-ID')} - {order.scheduledTime}</p>
                           {order.notes && <p><strong>Catatan:</strong> {order.notes}</p>}
                         </div>
 
@@ -297,7 +297,7 @@ const MitraDashboard = () => {
                         </div>
                         
                         <div className="text-sm">
-                          <p><strong>Jadwal:</strong> {new Date(order.scheduledDate).toLocaleDateString('id-ID')} - {order.scheduledTime}</p>
+                          <p><strong>Jadwal:</strong> {new Date(order.scheduled_date).toLocaleDateString('id-ID')} - {order.scheduledTime}</p>
                           {order.notes && <p><strong>Catatan:</strong> {order.notes}</p>}
                         </div>
 
@@ -377,16 +377,16 @@ const MitraDashboard = () => {
                         </div>
                         
                         <div className="text-sm">
-                          <p><strong>Tanggal:</strong> {new Date(order.scheduledDate).toLocaleDateString('id-ID')}</p>
-                          <p><strong>Durasi:</strong> {Math.round((order.workDuration || 0) / 60000)} menit</p>
+                          <p><strong>Tanggal:</strong> {new Date(order.scheduled_date).toLocaleDateString('id-ID')}</p>
+                          <p><strong>Durasi:</strong> {Math.round((order.duration_minutes || 0))} menit</p>
                         </div>
 
-                        {order.totalAmount && (
+                        {order.total_amount && (
                           <div className="bg-green-50 p-3 rounded-lg">
                             <div className="flex justify-between items-center">
                               <span className="font-medium">Pendapatan:</span>
                               <span className="text-green-700 font-bold">
-                                Rp {order.totalAmount.toLocaleString('id-ID')}
+                                Rp {order.total_amount.toLocaleString('id-ID')}
                               </span>
                             </div>
                           </div>
@@ -418,7 +418,7 @@ const MitraDashboard = () => {
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    Rp {completedOrders.reduce((total, order) => total + (order.totalAmount || 0), 0).toLocaleString('id-ID')}
+                    Rp {completedOrders.reduce((total, order) => total + (order.total_amount || 0), 0).toLocaleString('id-ID')}
                   </div>
                   <div className="text-sm text-gray-600">Total Pendapatan</div>
                 </CardContent>
@@ -441,15 +441,15 @@ const MitraDashboard = () => {
                         <div>
                           <h4 className="font-medium">{order.serviceName}</h4>
                           <p className="text-sm text-gray-600">
-                            {new Date(order.scheduledDate).toLocaleDateString('id-ID')}
+                            {new Date(order.scheduled_date).toLocaleDateString('id-ID')}
                           </p>
                         </div>
                         <div className="text-right">
                           <div className="text-lg font-bold text-green-600">
-                            +Rp {(order.totalAmount || 0).toLocaleString('id-ID')}
+                            +Rp {(order.total_amount || 0).toLocaleString('id-ID')}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {Math.round((order.workDuration || 0) / 60000)} menit
+                            {Math.round((order.duration_minutes || 0))} menit
                           </div>
                         </div>
                       </div>

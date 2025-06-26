@@ -20,7 +20,7 @@ const OrderHistory: React.FC<OrderHistoryProps> = ({ userId }) => {
   const completedOrders = userOrders.filter(order => order.status === 'completed');
 
   const filteredOrders = completedOrders.filter(order => {
-    const matchesDate = !dateFilter || order.scheduledDate.includes(dateFilter);
+    const matchesDate = !dateFilter || order.scheduled_date.includes(dateFilter);
     const matchesStatus = !statusFilter || order.status === statusFilter;
     return matchesDate && matchesStatus;
   });
@@ -113,21 +113,21 @@ const OrderHistory: React.FC<OrderHistoryProps> = ({ userId }) => {
                   </div>
                   
                   <div className="text-sm space-y-1">
-                    <p><strong>Tanggal:</strong> {new Date(order.scheduledDate).toLocaleDateString('id-ID')}</p>
+                    <p><strong>Tanggal:</strong> {new Date(order.scheduled_date).toLocaleDateString('id-ID')}</p>
                     <p><strong>Waktu:</strong> {order.scheduledTime}</p>
                     {order.notes && <p><strong>Catatan:</strong> {order.notes}</p>}
                   </div>
 
-                  {order.totalAmount && (
+                  {order.total_amount && (
                     <div className="bg-green-50 p-3 rounded-lg">
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Total Biaya:</span>
                         <span className="text-green-700 font-bold">
-                          Rp {order.totalAmount.toLocaleString('id-ID')}
+                          Rp {order.total_amount.toLocaleString('id-ID')}
                         </span>
                       </div>
                       <p className="text-xs text-gray-600 mt-1">
-                        Durasi: {Math.round((order.workDuration || 0) / 60)} menit
+                        Durasi: {Math.round((order.duration_minutes || 0))} menit
                       </p>
                     </div>
                   )}

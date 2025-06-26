@@ -25,8 +25,8 @@ const AdminDashboard = () => {
     name: '',
     description: '',
     icon: '',
-    basePrice: 0,
-    isActive: true
+    base_price: 0,
+    is_active: true
   });
 
   useEffect(() => {
@@ -127,8 +127,8 @@ const AdminDashboard = () => {
       name: '',
       description: '',
       icon: '',
-      basePrice: 0,
-      isActive: true
+      base_price: 0,
+      is_active: true
     });
   };
 
@@ -138,8 +138,8 @@ const AdminDashboard = () => {
       name: service.name,
       description: service.description,
       icon: service.icon,
-      basePrice: service.basePrice,
-      isActive: service.isActive
+      base_price: service.base_price,
+      is_active: service.is_active
     });
     setShowServiceForm(true);
   };
@@ -156,10 +156,10 @@ const AdminDashboard = () => {
 
   const totalRevenue = orders
     .filter(order => order.status === 'completed')
-    .reduce((total, order) => total + (order.totalAmount || 0), 0);
+    .reduce((total, order) => total + (order.total_amount || 0), 0);
 
   const todayOrders = orders.filter(order => {
-    const orderDate = new Date(order.createdAt).toDateString();
+    const orderDate = new Date(order.created_at).toDateString();
     const today = new Date().toDateString();
     return orderDate === today;
   });
@@ -270,7 +270,7 @@ const AdminDashboard = () => {
                         <div>
                           <p className="text-sm font-medium">{order.serviceName}</p>
                           <p className="text-xs text-gray-600">
-                            {new Date(order.createdAt).toLocaleDateString('id-ID')}
+                            {new Date(order.created_at).toLocaleDateString('id-ID')}
                           </p>
                         </div>
                         <Badge className={`${
@@ -479,13 +479,13 @@ const AdminDashboard = () => {
                           <h4 className="font-medium">{service.name}</h4>
                           <p className="text-sm text-gray-600">{service.description}</p>
                           <p className="text-sm text-blue-600 font-medium">
-                            Rp {service.basePrice.toLocaleString('id-ID')}
+                            Rp {service.base_price.toLocaleString('id-ID')}
                           </p>
                         </div>
                       </div>
                       <div className="flex flex-col space-y-2">
-                        <Badge className={`${service.isActive ? 'bg-green-500' : 'bg-gray-500'} text-white`}>
-                          {service.isActive ? 'Aktif' : 'Nonaktif'}
+                        <Badge className={`${service.is_active ? 'bg-green-500' : 'bg-gray-500'} text-white`}>
+                          {service.is_active ? 'Aktif' : 'Nonaktif'}
                         </Badge>
                         <div className="flex space-x-1">
                           <Button
@@ -535,7 +535,7 @@ const AdminDashboard = () => {
               <h4 className="text-md font-semibold mb-3">Transaksi Terbaru</h4>
               <div className="space-y-3">
                 {orders
-                  .filter(order => order.status === 'completed' && order.totalAmount)
+                  .filter(order => order.status === 'completed' && order.total_amount)
                   .slice(-10)
                   .reverse()
                   .map(order => (
@@ -545,15 +545,15 @@ const AdminDashboard = () => {
                           <div>
                             <h4 className="font-medium">{order.serviceName}</h4>
                             <p className="text-sm text-gray-600">
-                              {new Date(order.scheduledDate).toLocaleDateString('id-ID')}
+                              {new Date(order.scheduled_date).toLocaleDateString('id-ID')}
                             </p>
                           </div>
                           <div className="text-right">
                             <div className="text-lg font-bold text-green-600">
-                              Rp {order.totalAmount?.toLocaleString('id-ID')}
+                              Rp {order.total_amount?.toLocaleString('id-ID')}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {Math.round((order.workDuration || 0) / 60000)} menit
+                              {Math.round((order.duration_minutes || 0))} menit
                             </div>
                           </div>
                         </div>
@@ -614,8 +614,8 @@ const AdminDashboard = () => {
               <Input
                 id="servicePrice"
                 type="number"
-                value={serviceForm.basePrice}
-                onChange={(e) => setServiceForm(prev => ({ ...prev, basePrice: parseInt(e.target.value) || 0 }))}
+                value={serviceForm.base_price}
+                onChange={(e) => setServiceForm(prev => ({ ...prev, base_price: parseInt(e.target.value) || 0 }))}
                 placeholder="50000"
                 required
               />
@@ -625,8 +625,8 @@ const AdminDashboard = () => {
               <input
                 type="checkbox"
                 id="serviceActive"
-                checked={serviceForm.isActive}
-                onChange={(e) => setServiceForm(prev => ({ ...prev, isActive: e.target.checked }))}
+                checked={serviceForm.is_active}
+                onChange={(e) => setServiceForm(prev => ({ ...prev, is_active: e.target.checked }))}
               />
               <Label htmlFor="serviceActive">Layanan Aktif</Label>
             </div>
@@ -642,8 +642,8 @@ const AdminDashboard = () => {
                     name: '',
                     description: '',
                     icon: '',
-                    basePrice: 0,
-                    isActive: true
+                    base_price: 0,
+                    is_active: true
                   });
                 }}
                 className="flex-1"

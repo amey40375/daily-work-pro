@@ -108,7 +108,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             hour: '2-digit', 
             minute: '2-digit' 
           }),
-          status: mapOrderStatus(order.status),
+          status: mapOrderStatus(order.status) as 'pending' | 'accepted' | 'on-way' | 'working' | 'completed' | 'cancelled',
           start_time: order.start_time,
           end_time: order.end_time,
           total_amount: order.total_amount ? Number(order.total_amount) : undefined,

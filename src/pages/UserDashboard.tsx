@@ -163,7 +163,13 @@ const UserDashboard = () => {
                   .map(service => (
                     <ServiceCard
                       key={service.id}
-                      service={service}
+                      service={{
+                        id: service.id,
+                        name: service.name,
+                        description: service.description,
+                        icon: service.icon,
+                        basePrice: service.base_price
+                      }}
                       onSelect={() => handleServiceSelect(service)}
                     />
                   ))}
@@ -272,7 +278,11 @@ const UserDashboard = () => {
       {/* Order Form Modal */}
       {showOrderForm && selectedService && (
         <OrderForm
-          service={selectedService}
+          service={{
+            id: selectedService.id,
+            name: selectedService.name,
+            base_price: selectedService.base_price
+          }}
           onClose={() => {
             setShowOrderForm(false);
             setSelectedService(null);
