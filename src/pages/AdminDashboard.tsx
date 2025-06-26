@@ -428,7 +428,7 @@ const AdminDashboard = () => {
                           <h4 className="font-medium">{order.serviceName}</h4>
                           <p className="text-sm text-gray-600">{order.address}</p>
                           <p className="text-xs text-gray-500">
-                            {new Date(order.createdAt).toLocaleDateString('id-ID')}
+                            {new Date(order.created_at).toLocaleDateString('id-ID')}
                           </p>
                         </div>
                         <div className="text-right">
@@ -441,9 +441,9 @@ const AdminDashboard = () => {
                           } text-white mb-2`}>
                             {order.status}
                           </Badge>
-                          {order.totalAmount && (
+                          {order.total_amount && (
                             <div className="text-sm font-medium text-green-600">
-                              Rp {order.totalAmount.toLocaleString('id-ID')}
+                              Rp {order.total_amount.toLocaleString('id-ID')}
                             </div>
                           )}
                         </div>
