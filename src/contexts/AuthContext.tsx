@@ -72,25 +72,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session);
+        console.log('Auth event:', event, 'Session:', session);
         setSession(session);
         
         if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
 
-          if (profile) {
-            setUser({
-              id: profile.id,
-              email: profile.email,
-              name: profile.full_name,
-              role: profile.role,
-              phone: profile.phone,
-              isVerified: profile.role === 'user' || profile.role === 'admin'
-            });
+            console.log('Profile data:', profile);
+
+            if (profile) {
+              setUser({
+                id: profile.id,
+                email: profile.email,
+                name: profile.full_name,
+                role: profile.role,
+                phone: profile.phone,
+                isVerified: profile.role === 'user' || profile.role === 'admin'
+              });
+            }
+          } catch (error) {
+            console.error('Error fetching profile:', error);
           }
         } else {
           setUser(null);
@@ -101,6 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session);
       if (session) {
         setSession(session);
       } else {
@@ -115,6 +122,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
+      console.log('Attempting login for:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -122,15 +131,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Login error:', error);
+        setIsLoading(false);
         return false;
       }
 
       if (data.user) {
+        console.log('Login successful for user:', data.user.id);
+        
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
           .single();
+
+        console.log('User profile:', profile);
 
         // Check if mitra is verified
         if (profile?.role === 'mitra') {
@@ -142,21 +156,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .single();
 
           if (!mitraApp) {
+            console.log('Mitra not approved yet');
             await supabase.auth.signOut();
+            setIsLoading(false);
             return false; // Will show verification pending message
           }
         }
 
         setLastActivity(Date.now());
+        setIsLoading(false);
         return true;
       }
 
+      setIsLoading(false);
       return false;
     } catch (error) {
       console.error('Login error:', error);
-      return false;
-    } finally {
       setIsLoading(false);
+      return false;
     }
   };
 
@@ -164,6 +181,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
+      console.log('Attempting registration:', { email: userData.email, role });
+      
       const { data, error } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
@@ -177,12 +196,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
+      console.log('Registration response:', { data, error });
+
       if (error) {
         console.error('Registration error:', error);
+        setIsLoading(false);
         return false;
       }
 
       if (data.user) {
+        console.log('Registration successful for user:', data.user.id);
+        
         // If registering as mitra, add to mitra_applications
         if (role === 'mitra') {
           const { error: mitraError } = await supabase
@@ -202,19 +226,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
+        setIsLoading(false);
         return true;
       }
 
+      setIsLoading(false);
       return false;
     } catch (error) {
       console.error('Registration error:', error);
-      return false;
-    } finally {
       setIsLoading(false);
+      return false;
     }
   };
 
   const logout = async () => {
+    console.log('Logging out');
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);

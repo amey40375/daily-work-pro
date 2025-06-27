@@ -3,29 +3,38 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const createAdminAccount = async () => {
   try {
+    console.log('Checking if admin already exists...');
+    
     // Check if admin already exists
-    const { data: existingProfile } = await supabase
+    const { data: existingProfile, error: checkError } = await supabase
       .from('profiles')
       .select('*')
       .eq('email', 'id.arvinstudio@gmail.com')
-      .single();
+      .maybeSingle();
+
+    console.log('Admin check result:', { existingProfile, checkError });
 
     if (existingProfile) {
       console.log('Admin account already exists');
       return { success: true, message: 'Admin account already exists' };
     }
 
+    console.log('Creating admin account...');
+    
     // Create admin user via auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: 'id.arvinstudio@gmail.com',
       password: 'admin123!@#',
       options: {
+        emailRedirectTo: `${window.location.origin}/`,
         data: {
           full_name: 'Administrator',
           role: 'admin'
         }
       }
     });
+
+    console.log('Admin creation result:', { authData, authError });
 
     if (authError) {
       console.error('Error creating admin user:', authError);

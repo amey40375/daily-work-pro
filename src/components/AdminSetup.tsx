@@ -12,11 +12,13 @@ const AdminSetup: React.FC = () => {
     setIsCreating(true);
     
     try {
+      console.log('Starting admin creation process...');
       const result = await createAdminAccount();
+      console.log('Admin creation result:', result);
       
       if (result.success) {
         toast({
-          title: "Success",
+          title: "Berhasil",
           description: result.message,
         });
       } else {
@@ -27,6 +29,7 @@ const AdminSetup: React.FC = () => {
         });
       }
     } catch (error) {
+      console.error('Error in handleCreateAdmin:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
@@ -40,11 +43,11 @@ const AdminSetup: React.FC = () => {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle className="text-center">Admin Setup</CardTitle>
+        <CardTitle className="text-center">Setup Admin</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-gray-600 text-center">
-          Click the button below to create the admin account with email: 
+          Klik tombol dibawah untuk membuat akun admin dengan email: 
           <br />
           <strong>id.arvinstudio@gmail.com</strong>
         </p>
@@ -53,10 +56,10 @@ const AdminSetup: React.FC = () => {
           disabled={isCreating}
           className="w-full"
         >
-          {isCreating ? 'Creating Admin...' : 'Create Admin Account'}
+          {isCreating ? 'Membuat Admin...' : 'Buat Akun Admin'}
         </Button>
         <div className="text-xs text-gray-500 text-center">
-          Default password: admin123!@#
+          Password default: admin123!@#
         </div>
       </CardContent>
     </Card>
