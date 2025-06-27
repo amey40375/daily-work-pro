@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from '@/hooks/use-toast';
 import RegistrationForm from '../components/RegistrationForm';
 import AdminSetup from '../components/AdminSetup';
-import { supabase } from '@/integrations/supabase/client';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -42,20 +41,13 @@ const Login = () => {
       if (email === 'id.arvinstudio@gmail.com') {
         navigate('/admin');
       } else {
-        // Get user profile from Supabase
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-          
-          if (profile?.role === 'mitra') {
-            navigate('/mitra');
-          } else {
-            navigate('/user');
-          }
+        // Get user role from localStorage
+        const savedUser = JSON.parse(localStorage.getItem('dailywork_user') || '{}');
+        
+        if (savedUser.role === 'mitra') {
+          navigate('/mitra');
+        } else {
+          navigate('/user');
         }
       }
       
@@ -66,15 +58,12 @@ const Login = () => {
     } else {
       // Check if it's a pending mitra
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-          
-          if (profile?.role === 'mitra') {
+        const savedUsers = JSON.parse(localStorage.getItem('dailywork_users') || '[]');
+        const user = savedUsers.find((u: any) => u.email === email && u.password === password);
+        
+        if (user && user.role === 'mitra') {
+          const approvedMitras = JSON.parse(localStorage.getItem('dailywork_approved_mitras') || '[]');
+          if (!approvedMitras.includes(user.id)) {
             setShowMitraPending(true);
             return;
           }

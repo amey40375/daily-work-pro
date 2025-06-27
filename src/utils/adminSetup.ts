@@ -1,45 +1,29 @@
 
-import { supabase } from '@/integrations/supabase/client';
-
 export const createAdminAccount = async () => {
   try {
-    console.log('Checking if admin already exists...');
+    console.log('Creating admin account in localStorage...');
     
     // Check if admin already exists
-    const { data: existingProfile, error: checkError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('email', 'id.arvinstudio@gmail.com')
-      .maybeSingle();
+    const savedUsers = JSON.parse(localStorage.getItem('dailywork_users') || '[]');
+    const existingAdmin = savedUsers.find((u: any) => u.email === 'id.arvinstudio@gmail.com');
 
-    console.log('Admin check result:', { existingProfile, checkError });
-
-    if (existingProfile) {
+    if (existingAdmin) {
       console.log('Admin account already exists');
       return { success: true, message: 'Admin account already exists' };
     }
 
-    console.log('Creating admin account...');
-    
-    // Create admin user via auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Create admin user
+    const adminUser = {
+      id: 'admin-001',
       email: 'id.arvinstudio@gmail.com',
       password: 'admin123!@#',
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          full_name: 'Administrator',
-          role: 'admin'
-        }
-      }
-    });
+      name: 'Administrator',
+      role: 'admin',
+      createdAt: new Date().toISOString()
+    };
 
-    console.log('Admin creation result:', { authData, authError });
-
-    if (authError) {
-      console.error('Error creating admin user:', authError);
-      return { success: false, error: authError.message };
-    }
+    savedUsers.push(adminUser);
+    localStorage.setItem('dailywork_users', JSON.stringify(savedUsers));
 
     console.log('Admin account created successfully');
     return { success: true, message: 'Admin account created successfully' };
