@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import RegistrationForm from '../components/RegistrationForm';
+import AdminSetup from '../components/AdminSetup';
 import { supabase } from '@/integrations/supabase/client';
 
 const Login = () => {
@@ -17,6 +18,7 @@ const Login = () => {
   const [showRegistration, setShowRegistration] = useState(false);
   const [registrationType, setRegistrationType] = useState<'user' | 'mitra'>('user');
   const [showMitraPending, setShowMitraPending] = useState(false);
+  const [showAdminSetup, setShowAdminSetup] = useState(false);
   
   const { login, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -139,13 +141,21 @@ const Login = () => {
             </Button>
           </form>
           
-          <div className="mt-6 text-center">
+          <div className="mt-6 space-y-3 text-center">
             <Button
               variant="outline"
               onClick={() => setShowRegistration(true)}
               className="w-full h-12 border-blue-500 text-blue-500 hover:bg-blue-50"
             >
               Pendaftaran
+            </Button>
+            
+            <Button
+              variant="outline"
+              onClick={() => setShowAdminSetup(true)}
+              className="w-full h-12 border-gray-500 text-gray-500 hover:bg-gray-50"
+            >
+              Setup Admin
             </Button>
           </div>
         </CardContent>
@@ -199,6 +209,16 @@ const Login = () => {
               Hubungi Admin via WhatsApp
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Admin Setup Dialog */}
+      <Dialog open={showAdminSetup} onOpenChange={setShowAdminSetup}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">Setup Admin Account</DialogTitle>
+          </DialogHeader>
+          <AdminSetup />
         </DialogContent>
       </Dialog>
 
